@@ -1,31 +1,75 @@
  let elForm=document.querySelector("#form");
- let elInput=document.querySelector("#input");
- let elBtn=document.querySelector("#btn");
- let elList=document.querySelector(".item");
- let deleteBtn=document.querySelector("#delbtn");
+ let elList=document.querySelector(".list");
+ 
 
- elBtn.addEventListener("click", function(evt){
-   evt.preventDefault();
+ let todosArr = getLocalStorage() || [];
 
-   if (elInput.value==''){
-       alert("Please, add task!");
-       elInput.value=null;
-
-   }else{
-      elList.innerHTML +=`
-      <li class="item" style="padding:8px; margin-bottom:30px; background-color: #fff; border-radius: 5px 0px 0px 5px; border: none;  height: 30px; margin-left: 70px; width: 500px; list-style-type: none;"> ${elInput.value} <button style=" background-color: rgb(238, 152, 130); margin-top:-30px; border-radius: 0px 5px 5px 0px; border: none; margin-left: 500px; cursor: pointer;" onclick="deleteElements" id="delbtn" ><img  src="./img/delete-svgrepo-com.svg" alt="delete" width="40" height="40"></button></li>`;
-      elInput.value=null;
-
-    };
-
-   deleteBtn.addEventListener("click", function(evt){
-      evt.preventDefault();
-
-     prompt("Delete Task");
-    
-   });
-   
-
-
-
- });
+ elForm.addEventListener("submit" , evt =>{
+     evt.preventDefault()
+     let {todo} = evt.target.elements
+     
+     let Arr = {
+         id: todosArr.length + 1,
+         todo: todo.value.trim(),
+         isComplate: false
+     };
+     todosArr.unshift(Arr);
+     saveLocalStorage(todosArr);
+     renderFunc(todosArr , elList);
+     todo.value = null;
+ })
+ 
+ function renderFunc(array , element) {
+     element.innerHTML = null;
+     for (let i = 0; i < array.length; i++) {
+         let Li = document.createElement("li");
+         let Check = document.createElement("input");
+         let P = document.createElement("p");
+         let Btn = document.createElement("button");
+         
+         if(array[i].isComplate){
+             Check.setAttribute("checked" , "true");
+         }
+         
+         Li.setAttribute("class", "item");
+         Check.setAttribute("type", "checkbox");
+         Btn.setAttribute("class", "delbtn");
+         
+         Btn.dataset.todoID = array[i].id;
+         Check.dataset.todoID = array[i].id;
+         
+         Btn.addEventListener("click" , evt => {
+             let btnID = evt.target.dataset.todoID;
+             let found = todosArr.findIndex((item) => item.id == btnID);
+             todosArr.splice(found , 1);
+             saveLocalStorage(todosArr);
+             renderFunc(todosArr , elList);
+         })
+ 
+         Check.addEventListener("click" , evt => {
+             let btnID = evt.target.dataset.todoID;
+             let foundtodo = todosArr.find((item) => item.id == btnID);
+             foundtodo.isComplate = !foundtodo.isComplate;
+             saveLocalStorage(todosArr);
+             renderFunc(todosArr , elList);
+         })
+         
+         P.textContent = array[i].todo;
+         Btn.textContent = "🗑️";
+         
+         Li.append(Check);
+         Li.append(P);
+         Li.append(Btn);
+         
+         element.append(Li);
+     }
+ }
+ renderFunc(todosArr , elList);
+ 
+ function saveLocalStorage(value) {
+     window.localStorage.setItem("todos", JSON.stringify(value));
+ }
+ 
+ function getLocalStorage(value) {
+    return JSON.parse(window.localStorage.getItem("todos"));
+ }
